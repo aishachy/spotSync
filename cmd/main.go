@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"spotSync/internal/user"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v5"
@@ -42,7 +43,6 @@ func main() {
 	db.AutoMigrate(&User{})
 
 	e := echo.New()
-	e.Validator = &CustomValidator{validator: validator.New()}
 
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
@@ -51,23 +51,9 @@ func main() {
 		return c.JSON(http.StatusOK, map[string]string{"message": "Hello, World!"})
 	})
 
-	e.POST("/users", func(c *echo.Context) error {
-		newUser := new(User)
-		if err := c.Bind(newUser); err != nil {
-			return err
-		}
+	e.Validator = &CustomValidator{validator: validator.New()}
 
-		if err := c.Validate(newUser); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]any{"error": err.Error()})
-		}
-
-		result := db.Create(newUser)
-		if result.Error != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]any{"error": result.Error.Error()})
-		}
-
-		return c.JSON(http.StatusCreated, newUser)
-	})
+	user.RegisterRoutes(e, db)
 
 	if err := e.Start(":5000"); err != nil {
 		e.Logger.Error("failed to start server", "error", err)
