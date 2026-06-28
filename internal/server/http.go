@@ -3,12 +3,13 @@ package server
 import (
 	"fmt"
 	"net/http"
+
 	"spotSync/internal/config"
+	"spotSync/internal/parkingzone"
 	"spotSync/internal/user"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v5"
-	"github.com/labstack/echo/v5/middleware"
 	"gorm.io/gorm"
 )
 
@@ -24,21 +25,26 @@ func (cv *CustomValidator) Validate(i any) error {
 }
 
 func Start(db *gorm.DB, cfg *config.Config) {
-	db.AutoMigrate(&user.User{})
+
+	// migrate tables
+	db.AutoMigrate(
+		&user.User{},
+		&parkingzone.ParkingZone{},
+	)
 
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	e.Use(middleware.RequestLogger())
-	e.Use(middleware.Recover())
 
 	e.GET("/", func(c *echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"message": "Hello, World!"})
+		return c.JSON(http.StatusOK, map[string]string{
+			"message": "Hello, World!",
+		})
 	})
 
+	// register routes
 	user.RegisterRoutes(e, db)
+	parkingzone.RegisterRoutes(e, db)
 
 	port := fmt.Sprintf(":%s", cfg.Port)
-	if err := e.Start(port); err != nil {
-		e.Logger.Error("failed to start server", "error", err)
-	}
+	e.Start(port)
 }

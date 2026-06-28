@@ -1,9 +1,17 @@
 package dto
 
-type Response struct {
-	Id        uint   `json:"id"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	Token     string `json:"token,omitempty"`
-	CreatedAt string `json:"created_at"`
+import "time"
+
+type LoginResponse struct {
+	Token string       `json:"token"`
+	User  UserResponse `json:"user"`
+}
+
+type UserResponse struct {
+	ID        uint      `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }

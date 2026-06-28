@@ -20,11 +20,16 @@ func NewService(repo Repository, jwtService auth.JWTService) *service {
 	}
 }
 
-func (s *service) CreateUser(req dto.CreateRequest) (*dto.Response, error) {
+func (s *service) CreateUser(req dto.CreateRequest) (*dto.UserResponse, error) {
 
 	user := User{
 		Name:  req.Name,
 		Email: req.Email,
+		Role:  req.Role,
+	}
+
+	if user.Role == "" {
+		user.Role = "driver"
 	}
 	err := user.hashedPassword(req.Password)
 	if err != nil {
@@ -36,17 +41,17 @@ func (s *service) CreateUser(req dto.CreateRequest) (*dto.Response, error) {
 		return nil, err
 	}
 
-	response := dto.Response{
-		Id:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt.String(),
+	response := dto.UserResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		Role:  user.Role,
 	}
 
 	return &response, nil
 }
 
-func (s *service) LoginUser(req dto.LoginRequest) (*dto.Response, error) {
+func (s *service) LoginUser(req dto.LoginRequest) (*dto.LoginResponse, error) {
 	user, err := s.repo.GetUserByEmail(req.Email)
 	if err != nil {
 		return nil, err
@@ -67,13 +72,16 @@ func (s *service) LoginUser(req dto.LoginRequest) (*dto.Response, error) {
 
 	}
 
-	response := dto.Response{
-		Id:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		Token:     token,
-		CreatedAt: user.CreatedAt.String(),
+	response := dto.LoginResponse{
+		Token: token,
+		User: dto.UserResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+			Role:  user.Role,
+		},
 	}
 
 	return &response, nil
+
 }

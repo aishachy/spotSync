@@ -56,7 +56,11 @@ func (h *handler) CreateUser(c *echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, response)
+	return c.JSON(http.StatusCreated, httpresponse.Success{
+		Success: true,
+		Message: "User registered successfully",
+		Data:    response,
+	})
 }
 
 func (h *handler) LoginUser(c *echo.Context) error {
@@ -95,5 +99,9 @@ func (h *handler) LoginUser(c *echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, httpresponse.Success{
+		Success: true,
+		Message: "Login successful",
+		Data:    response,
+	})
 }
