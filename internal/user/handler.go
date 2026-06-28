@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"net/http"
 	httpresponse "spotSync/internal/httpResponse"
 	"spotSync/internal/user/dto"
@@ -39,6 +40,15 @@ func (h *handler) CreateUser(c *echo.Context) error {
 
 	response, err := h.service.CreateUser(req)
 	if err != nil {
+
+		if errors.Is(err, ErrorAlreadyExist) {
+			return c.JSON(http.StatusConflict, httpresponse.Error{
+				Code:    http.StatusConflict,
+				Message: "Failed to create user",
+				Details: err.Error(),
+			})
+		}
+
 		return c.JSON(http.StatusInternalServerError, httpresponse.Error{
 			Code:    http.StatusInternalServerError,
 			Message: "Failed to create user",

@@ -1,6 +1,8 @@
 package user
 
-import "spotSync/internal/user/dto"
+import (
+	"spotSync/internal/user/dto"
+)
 
 type service struct {
 	repo Repository
@@ -15,13 +17,15 @@ func NewService(repo Repository) *service {
 func (s *service) CreateUser(req dto.CreateRequest) (*dto.Response, error) {
 
 	user := User{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
+		Name:  req.Name,
+		Email: req.Email,
+	}
+	err := user.hashedPassword(req.Password)
+	if err != nil {
+		return nil, err
 	}
 
-	err := s.repo.CreateUser(&user)
-
+	err = s.repo.CreateUser(&user)
 	if err != nil {
 		return nil, err
 	}
