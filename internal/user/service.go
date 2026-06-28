@@ -1,16 +1,22 @@
 package user
 
 import (
+	"fmt"
+	"spotSync/internal/auth"
 	"spotSync/internal/user/dto"
 )
 
+var ErrInvalidCredentials = fmt.Errorf("Invalid email or password")
+
 type service struct {
-	repo Repository
+	repo       Repository
+	jwtService auth.JWTService
 }
 
-func NewService(repo Repository) *service {
+func NewService(repo Repository, jwtService auth.JWTService) *service {
 	return &service{
-		repo: repo,
+		repo:       repo,
+		jwtService: jwtService,
 	}
 }
 
@@ -34,6 +40,38 @@ func (s *service) CreateUser(req dto.CreateRequest) (*dto.Response, error) {
 		Id:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
+		CreatedAt: user.CreatedAt.String(),
+	}
+
+	return &response, nil
+}
+
+func (s *service) LoginUser(req dto.LoginRequest) (*dto.Response, error) {
+	user, err := s.repo.GetUserByEmail(req.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, nil
+	}
+
+	err = user.checkPassword(req.Password)
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	token, err := s.jwtService.GenerateToken(user.ID, user.Email, user.Name)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to generate token: %w", err)
+
+	}
+
+	response := dto.Response{
+		Id:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Token:     token,
 		CreatedAt: user.CreatedAt.String(),
 	}
 
